@@ -1,0 +1,87 @@
+buildscript { 
+        ext { 
+          springBootVersion = '1.3.2.RELEASE' 
+        } 
+        repositories {  
+           mavenCentral() 
+        } 
+        dependencies { 
+          classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}") 
+          classpath "io.spring.gradle:dependency-management-plugin:0.4.0.RELEASE" 
+          classpath "se.transmode.gradle:gradle-docker:1.2" 
+        } 
+  } 
+  
+  apply plugin: 'groovy' 
+  apply plugin: 'eclipse' 
+  apply plugin: 'idea' 
+  apply plugin: 'spring-boot' 
+  apply plugin: 'docker' 
+  apply plugin: "io.spring.dependency-management" 
+  
+  dependencyManagement { 
+          imports { 
+                mavenBom 'org.springframework.data:spring-data-releasetrain:Hopper-SR1' 
+          } 
+        } 
+  
+  jar { 
+        baseName = 'neo4j-example' 
+        version = '0.0.1-SNAPSHOT' 
+  } 
+  sourceCompatibility = 1.8 
+  targetCompatibility = 1.8 
+  
+  repositories { 
+        
+        mavenCentral() 
+        jcenter() 
+  } 
+  
+  dependencies { 
+        compile 'org.springframework.boot:spring-boot-devtools' 
+        compile 'org.springframework.boot:spring-boot-starter-web' 
+        compile 'org.codehaus.groovy:groovy' 
+        
+        compile 'org.springframework.data:spring-data-neo4j:4.1.1.RELEASE' 
+  
+        compile 'org.springframework.session:spring-session' 
+        compile 'com.jayway.jsonpath:json-path:2.2.0' 
+        //compile 'org.springframework.boot:spring-boot-starter-redis' 
+  
+        testCompile 'org.springframework.boot:spring-boot-starter-test' 
+        testCompile 'org.spockframework:spock-spring' 
+        testCompile 'com.geowarin:spring-spock-mvc:0.2.1' 
+        
+        testCompile 'org.assertj:assertj-core:1.7.0' 
+        testCompile 'com.jayway.restassured:rest-assured:2.4.0' 
+        testCompile 'org.hamcrest:hamcrest-core:1.3' 
+        testCompile 'org.mockito:mockito-all:1.10.19' 
+  } 
+  
+  
+  eclipse { 
+        classpath { 
+          containers.remove('org.eclipse.jdt.launching.JRE_CONTAINER') 
+          containers 'org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8' 
+        } 
+  } 
+  
+  
+  task buildDocker(type: Docker) { 
+        baseImage = 'develar/java:latest' 
+        push = false 
+        tag = 'geowarin/boot-react' 
+        addFile { 
+          from jar 
+          rename {'app.jar'} 
+        } 
+        entryPoint(['java', '-Djava.security.egd=file:/dev/./urandom', '-jar', '/app.jar']) 
+        exposePort(8080) 
+  } 
+  
+  buildDocker.dependsOn(build) 
+  
+  task wrapper(type: Wrapper) { 
+          gradleVersion = '2.11' 
+  } 
